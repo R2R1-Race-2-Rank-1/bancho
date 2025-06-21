@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   production-deploy:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
       - name: Check out latest commit
@@ -28,7 +28,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: tylere431/hanayo
+          images: tylere431/bancho-service
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -48,7 +48,7 @@ jobs:
           sudo chown $(id -u):$(id -g) $HOME/.kube/config
           chmod 600 $HOME/.kube/config
 
-      - name: Rollout Updated Hanayo Deployment
+      - name: Rollout Updated Bancho Deployment
         run: |
-          kubectl rollout restart deployment hanayo
-          kubectl rollout status deployment hanayo --timeout=60s
+          kubectl rollout restart deployment bancho-service-api
+          kubectl rollout status deployment bancho-service-api --timeout=60s
