@@ -37,8 +37,8 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/hanayo:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/hanayo:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/bancho-service:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/bancho-service:${{ github.sha }}
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Get kubeconfig from github secrets
