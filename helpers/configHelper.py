@@ -8,6 +8,66 @@ class config:
         if not self.checkConfig():
             self.default = True
 
+    @property
+    def config(self):
+        
+        return {
+            "db": {
+                "host": self.get("db", "host"),
+                "username": self.get("db", "username"),
+                "password": self.get("db", "password"),
+                "database": self.get("db", "database"),
+                "workers": self.get("db", "workers"),
+            },
+            "redis": {
+                "host": self.get("redis", "host"),
+                "port": self.get("redis", "port"),
+                "database": self.get("redis", "database"),
+                "password": self.get("redis", "password"),
+            },
+            "server": {
+                "port": self.get("server", "port"),
+                "threads": self.get("server", "threads"),
+                "gzip": self.get("server", "gzip"),
+                "gziplevel": self.get("server", "gziplevel"),
+                "cikey": self.get("server", "cikey"),
+                "letsapiurl": self.get("server", "letsapiurl"),
+            },
+            "cheesegull": {
+                "apiurl": self.get("cheesegull", "apiurl"),
+                "apikey": self.get("cheesegull", "apikey"),
+            },
+            "debug": {
+                "enable": self.get("debug", "enable"),
+                "packets": self.get("debug", "packets"),
+                "time": self.get("debug", "time"),
+            },
+            "sentry": {
+                "enable": self.get("sentry", "enable"),
+                "banchodsn": self.get("sentry", "banchodsn"),
+                "ircdsn": self.get("sentry", "ircdsn"),
+            },
+            "discord": {
+                "enable": self.get("discord", "enable"),
+                "boturl": self.get("discord", "boturl"),
+                "devgroup": self.get("discord", "devgroup"),
+            },
+            "datadog": {
+                "enable": self.get("datadog", "enable"),
+                "apikey": self.get("datadog", "apikey"),
+                "appkey": self.get("datadog", "appkey"),
+            },
+            "irc": {
+                "enable": self.get("irc", "enable"),
+                "port": self.get("irc", "port"),
+                "hostname": self.get("irc", "hostname"),
+            },
+            "localize": {
+                "enable": self.get("localize", "enable"),
+                "ipapiurl": self.get("localize", "ipapiurl"),
+            },
+        }
+
     def checkConfig(self):
         try:
             self.get("db", "host")
