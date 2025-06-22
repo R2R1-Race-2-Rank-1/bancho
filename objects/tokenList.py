@@ -94,17 +94,19 @@ class tokenList:
 		"""Deserialize JSON data back to token object"""
 		data = json.loads(jsonData)
 		
-		# Create token object with basic params
-		tokenObj = osuToken.token(
-			data['userID'], 
-			token_=data['token'],
-			ip=data['ip'],
-			irc=data['irc'],
-			timeOffset=data['timeOffset'],
-			tournament=data['tournament']
-		)
+		# Create a minimal token object to avoid recursion
+		# We'll manually set all properties instead of using the constructor
+		tokenObj = object.__new__(osuToken.token)
 		
-		# Restore all the state
+		# Set basic properties first
+		tokenObj.userID = data['userID']
+		tokenObj.token = data['token']
+		tokenObj.ip = data['ip']
+		tokenObj.irc = data['irc']
+		tokenObj.timeOffset = data['timeOffset']
+		tokenObj.tournament = data['tournament']
+		
+		# Restore all the state from JSON
 		tokenObj.username = data['username']
 		tokenObj.safeUsername = data['safeUsername']
 		tokenObj.privileges = data['privileges']
@@ -146,7 +148,11 @@ class tokenList:
 		else:
 			tokenObj.queue = bytes()
 		
-		# Note: Locks are recreated in the constructor, no need to restore them
+		# Initialize the locks that are needed for the token to function
+		import threading
+		tokenObj.processingLock = threading.Lock()
+		tokenObj._bufferLock = threading.Lock()
+		tokenObj._spectLock = threading.RLock()
 		
 		return tokenObj
 	
@@ -212,7 +218,16 @@ class tokenList:
 		if token in self._tokenCache:
 			return self._tokenCache[token]
 		
+		# Prevent infinite recursion during deserialization
+		if hasattr(self, '_deserializing') and token in self._deserializing:
+			log.warning(f"Prevented recursion while deserializing token {token}")
+			return None
+		
 		try:
+			if not hasattr(self, '_deserializing'):
+				self._deserializing = set()
+			self._deserializing.add(token)
+			
 			tokenKey = self._getTokenKey(token)
 			tokenData = glob.redis.get(tokenKey)
 			
@@ -227,6 +242,10 @@ class tokenList:
 					return None
 		except Exception as e:
 			log.error(f"Failed to get token from Redis: {e}")
+		finally:
+			# Clean up recursion protection
+			if hasattr(self, '_deserializing'):
+				self._deserializing.discard(token)
 		
 		return None
 	
