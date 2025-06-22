@@ -222,7 +222,6 @@ class handler(requestsManager.asyncRequestHandler):
 		# Send server's response to client
 		# We don't use token object because we might not have a token (failed login)
 		if glob.gzip:
-			log.debug("Packet gzipped ({} bytes)\nData: {}".format(len(responseData), responseData))
 			# First, write the gzipped response
 			self.write(gzip.compress(responseData, int(glob.conf.config["server"]["gziplevel"])))
 

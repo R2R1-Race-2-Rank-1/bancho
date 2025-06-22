@@ -55,6 +55,12 @@ def make_app():
 
 
 if __name__ == "__main__":
+	# AGPL license agreement
+	try:
+		agpl.check_license("ripple", "pep.py")
+	except agpl.LicenseError as e:
+		print(str(e))
+		sys.exit(1)
 
 	try:
 		# Server start
@@ -103,40 +109,7 @@ if __name__ == "__main__":
 		# Connect to redis
 		try:
 			consoleHelper.printNoNl("> Connecting to redis... ")
-			# Redis core params
-			redis_host = os.getenv("REDIS_HOST", "localhost")
-			redis_port = int(os.getenv("REDIS_PORT", "6379"))
-			redis_db   = int(os.getenv("REDIS_DB", "0"))
-			redis_pw   = os.getenv("REDIS_PASS", None)
-			redis_ssl  = os.getenv("REDIS_USE_SSL", "false").lower() == "true"
-			redis_to   = int(os.getenv("REDIS_TIMEOUT", "5"))
-			redis_decode = os.getenv("REDIS_DECODE_RESPONSES", "false").lower() == "true"
-
-			glob.redis = redis.StrictRedis(
-				host=redis_host,
-				port=redis_port,
-				db=redis_db,
-				password=redis_pw,
-				socket_timeout=redis_to,
-				ssl=redis_ssl,
-				decode_responses=redis_decode
-			)
-
-			# Optional separate session DB
-			session_db = int(os.getenv("REDIS_SESSION_DB", str(redis_db)))
-			if session_db != redis_db:
-				glob.session_redis = redis.StrictRedis(
-					host=redis_host,
-					port=redis_port,
-					db=session_db,
-					password=redis_pw,
-					socket_timeout=redis_to,
-					ssl=redis_ssl,
-					decode_responses=redis_decode
-				)
-			else:
-				glob.session_redis = glob.redis
-
+			glob.redis = redis.Redis(glob.conf.config["redis"]["host"], glob.conf.config["redis"]["port"], glob.conf.config["redis"]["database"], glob.conf.config["redis"]["password"])
 			glob.redis.ping()
 			consoleHelper.printNoNl(" ")
 			consoleHelper.printDone()
@@ -267,7 +240,7 @@ if __name__ == "__main__":
 					glob.conf.config["datadog"]["appkey"],
 					[
 						datadogClient.periodicCheck("online_users", lambda: len(glob.tokens.tokens)),
-						datadogClient.periodicCheck("multiplayer_matches", lambda: len(glob.matches)),
+						datadogClient.periodicCheck("multiplayer_matches", lambda: len(glob.matches.matches)),
 
 						#datadogClient.periodicCheck("ram_clients", lambda: generalUtils.getTotalSize(glob.tokens)),
 						#datadogClient.periodicCheck("ram_matches", lambda: generalUtils.getTotalSize(glob.matches)),

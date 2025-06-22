@@ -1,198 +1,147 @@
 import os
+import configparser
 
 class config:
-    def __init__(self, file=None):
-        self.default = False
-        self.fileName = file
-        
-        if not self.checkConfig():
-            self.default = True
+	# Check if config.ini exists and load/generate it
+	def __init__(self, file):
+		"""
+		Initialize a config file object
 
-    @property
-    def config(self):
-        
-        return {
-            "db": {
-                "host": self.get("db", "host"),
-                "username": self.get("db", "username"),
-                "password": self.get("db", "password"),
-                "database": self.get("db", "database"),
-                "workers": self.get("db", "workers"),
-            },
-            "redis": {
-                "host": self.get("redis", "host"),
-                "port": self.get("redis", "port"),
-                "database": self.get("redis", "database"),
-                "password": self.get("redis", "password"),
-            },
-            "server": {
-                "port": self.get("server", "port"),
-                "threads": self.get("server", "threads"),
-                "gzip": self.get("server", "gzip"),
-                "gziplevel": self.get("server", "gziplevel"),
-                "cikey": self.get("server", "cikey"),
-                "letsapiurl": self.get("server", "letsapiurl"),
-            },
-            "cheesegull": {
-                "apiurl": self.get("cheesegull", "apiurl"),
-                "apikey": self.get("cheesegull", "apikey"),
-            },
-            "debug": {
-                "enable": self.get("debug", "enable"),
-                "packets": self.get("debug", "packets"),
-                "time": self.get("debug", "time"),
-            },
-            "sentry": {
-                "enable": self.get("sentry", "enable"),
-                "banchodsn": self.get("sentry", "banchodsn"),
-                "ircdsn": self.get("sentry", "ircdsn"),
-            },
-            "discord": {
-                "enable": self.get("discord", "enable"),
-                "boturl": self.get("discord", "boturl"),
-                "devgroup": self.get("discord", "devgroup"),
-            },
-            "datadog": {
-                "enable": self.get("datadog", "enable"),
-                "apikey": self.get("datadog", "apikey"),
-                "appkey": self.get("datadog", "appkey"),
-            },
-            "irc": {
-                "enable": self.get("irc", "enable"),
-                "port": self.get("irc", "port"),
-                "hostname": self.get("irc", "hostname"),
-            },
-            "localize": {
-                "enable": self.get("localize", "enable"),
-                "ipapiurl": self.get("localize", "ipapiurl"),
-            },
-        }
+		:param file: file name
+		"""
+		self.config = configparser.ConfigParser()
+		self.default = True
+		self.fileName = file
+		if os.path.isfile(self.fileName):
+			# config.ini found, load it
+			self.config.read(self.fileName)
+			self.default = False
+		else:
+			# config.ini not found, generate a default one
+			self.generateDefaultConfig()
+			self.default = True
 
-    def checkConfig(self):
-        try:
-            self.get("db", "host")
-            self.get("db", "username") 
-            self.get("db", "password")
-            self.get("db", "database")
-            self.get("db", "workers")
 
-            self.get("redis", "host")
-            self.get("redis", "port")
-            self.get("redis", "database")
-            self.get("redis", "password")
+	# Check if config.ini has all needed the keys
+	def checkConfig(self):
+		"""
+		Check is the config file has all required keys
 
-            self.get("server", "port")
-            self.get("server", "threads")
-            self.get("server", "gzip")
-            self.get("server", "gziplevel")
-            self.get("server", "cikey")
-            self.get("server", "letsapiurl")
+		:return: True if valid, False if not valid
+		"""
+		try:
+			# Try to get all the required keys
+			self.config.get("db", "host")
+			self.config.get("db", "username")
+			self.config.get("db", "password")
+			self.config.get("db", "database")
+			self.config.get("db", "workers")
 
-            self.get("cheesegull", "apiurl")
-            self.get("cheesegull", "apikey")
+			self.config.get("redis", "host")
+			self.config.get("redis", "port")
+			self.config.get("redis", "database")
+			self.config.get("redis", "password")
 
-            self.get("debug", "enable")
-            self.get("debug", "packets")
-            self.get("debug", "time")
+			self.config.get("server", "port")
+			self.config.get("server", "threads")
+			self.config.get("server", "gzip")
+			self.config.get("server", "gziplevel")
+			self.config.get("server", "cikey")
+			self.config.get("server", "letsapiurl")
 
-            self.get("sentry", "enable")
-            self.get("sentry", "banchodsn")
-            self.get("sentry", "ircdsn")
+			self.config.get("cheesegull", "apiurl")
+			self.config.get("cheesegull", "apikey")
 
-            self.get("discord", "enable")
-            self.get("discord", "boturl")
-            self.get("discord", "devgroup")
+			self.config.get("debug", "enable")
+			self.config.get("debug", "packets")
+			self.config.get("debug", "time")
 
-            self.get("datadog", "enable")
-            self.get("datadog", "apikey")
-            self.get("datadog", "appkey")
+			self.config.get("sentry", "enable")
+			self.config.get("sentry", "banchodsn")
+			self.config.get("sentry", "ircdsn")
 
-            self.get("irc", "enable")
-            self.get("irc", "port")
-            self.get("irc", "hostname")
+			self.config.get("discord", "enable")
+			self.config.get("discord", "boturl")
+			self.config.get("discord", "devgroup")
 
-            self.get("localize", "enable")
-            self.get("localize", "ipapiurl")
-            
-            return True
-        except KeyError:
-            return False
+			self.config.get("datadog", "enable")
+			self.config.get("datadog", "apikey")
+			self.config.get("datadog", "appkey")
 
-    def get(self, section, key):
-        env_map = {
-            ("db", "host"): "DB_HOST",
-            ("db", "username"): "DB_USER", 
-            ("db", "password"): "DB_PASS",
-            ("db", "database"): "DB_NAME",
-            ("db", "workers"): "DB_WORKERS",
-            
-            ("redis", "host"): "REDIS_HOST",
-            ("redis", "port"): "REDIS_PORT",
-            ("redis", "database"): "REDIS_DB",
-            ("redis", "password"): "REDIS_PASS",
-            
-            ("server", "port"): "APP_PORT",
-            ("server", "threads"): "SERVICE_READINESS_TIMEOUT",
-            ("server", "gzip"): "APP_GZIP",
-            ("server", "gziplevel"): "APP_GZIP_LEVEL", 
-            ("server", "cikey"): "APP_CI_KEY",
-            ("server", "letsapiurl"): "SCORE_SERVICE_BASE_URL",
-            
-            ("cheesegull", "apiurl"): "BEATMAPS_SERVICE_BASE_URL",
-            ("cheesegull", "apikey"): "APP_API_KEY",
-            
-            ("debug", "enable"): "DEBUG",
-            ("debug", "packets"): "DEBUG",
-            ("debug", "time"): "DEBUG",
-            
-            ("sentry", "enable"): "SENTRY_ENABLE",
-            ("sentry", "banchodsn"): "SENTRY_BANCHO_DSN", 
-            ("sentry", "ircdsn"): "SENTRY_IRC_DSN",
-            
-            ("discord", "enable"): "DISCORD_ENABLE",
-            ("discord", "boturl"): "DISCORD_SERVER_URL",
-            ("discord", "devgroup"): "DISCORD_CLIENT_ID",
-            
-            ("datadog", "enable"): "DATADOG_ENABLE",
-            ("datadog", "apikey"): "DATADOG_API_KEY",
-            ("datadog", "appkey"): "DATADOG_APP_KEY",
-            
-            ("irc", "enable"): "IRC_ENABLE",
-            ("irc", "port"): "IRC_PORT", 
-            ("irc", "hostname"): "IRC_HOSTNAME",
-            
-            ("localize", "enable"): "LOCALIZE_ENABLE",
-            ("localize", "ipapiurl"): "IP_LOOKUP_URL",
-        }
-        
-        env_var = env_map.get((section, key))
-        if env_var:
-            value = os.getenv(env_var)
-            if value is not None:
-                return value
-        
-        defaults = {
-            ("server", "threads"): "16",
-            ("sentry", "enable"): "0",
-            ("sentry", "banchodsn"): "",
-            ("sentry", "ircdsn"): "", 
-            ("discord", "enable"): "0",
-            ("datadog", "enable"): "0",
-            ("datadog", "apikey"): "",
-            ("datadog", "appkey"): "",
-            ("irc", "enable"): "1",
-            ("irc", "port"): "6667",
-            ("irc", "hostname"): "ripple",
-        }
-        
-        default_value = defaults.get((section, key))
-        if default_value is not None:
-            return default_value
-            
-        raise KeyError(f"Environment variable not found for {section}.{key}")
+			self.config.get("irc", "enable")
+			self.config.get("irc", "port")
+			self.config.get("irc", "hostname")
 
-    def set(self, section, key, value):
-        pass
+			self.config.get("localize", "enable")
+			self.config.get("localize", "ipapiurl")
+			return True
+		except configparser.Error:
+			return False
 
-    def generateDefaultConfig(self):
-        pass
+	def generateDefaultConfig(self):
+		"""
+		Write a default config file to disk
+
+		:return:
+		"""
+		# Open config.ini in write mode
+		f = open(self.fileName, "w")
+
+		# Set keys to config object
+		self.config.add_section("db")
+		self.config.set("db", "host", "db")
+		self.config.set("db", "username", "root")
+		self.config.set("db", "password", "MYSQL_ROOT_PASSWORD")
+		self.config.set("db", "database", "ripple")
+		self.config.set("db", "workers", "4")
+
+		self.config.add_section("redis")
+		self.config.set("redis", "host", "redis.default.svc.cluster.local")
+		self.config.set("redis", "port", "6379")
+		self.config.set("redis", "database", "0")
+		self.config.set("redis", "password", "")
+
+		self.config.add_section("server")
+		self.config.set("server", "port", "80")
+		self.config.set("server", "threads", "16")
+		self.config.set("server", "gzip", "1")
+		self.config.set("server", "gziplevel", "6")
+		self.config.set("server", "cikey", "CIKEYVALUE")
+		self.config.set("server", "letsapiurl", "http://score-service.default.svc.cluster.local/letsapi")
+
+		self.config.add_section("cheesegull")
+		self.config.set("cheesegull", "apiurl", "http://cheesegull/api")
+		self.config.set("cheesegull", "apikey", "")
+
+		self.config.add_section("debug")
+		self.config.set("debug", "enable", "0")
+		self.config.set("debug", "packets", "0")
+		self.config.set("debug", "time", "0")
+
+		self.config.add_section("sentry")
+		self.config.set("sentry", "enable", "0")
+		self.config.set("sentry", "banchodsn", "")
+		self.config.set("sentry", "ircdsn", "")
+
+		self.config.add_section("discord")
+		self.config.set("discord", "enable", "0")
+		self.config.set("discord", "boturl", "")
+		self.config.set("discord", "devgroup", "")
+
+		self.config.add_section("datadog")
+		self.config.set("datadog", "enable", "0")
+		self.config.set("datadog", "apikey", "")
+		self.config.set("datadog", "appkey", "")
+
+		self.config.add_section("irc")
+		self.config.set("irc", "enable", "0")
+		self.config.set("irc", "port", "6667")
+		self.config.set("irc", "hostname", "ripple")
+
+		self.config.add_section("localize")
+		self.config.set("localize", "enable", "1")
+		self.config.set("localize", "ipapiurl", "http://ip.zxq.co")
+
+		# Write ini to file and close
+		self.config.write(f)
+		f.close()
