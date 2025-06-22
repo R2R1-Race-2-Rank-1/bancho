@@ -36,53 +36,59 @@ class tokenList:
 	
 	def _serializeToken(self, tokenObj):
 		"""Serialize token object to JSON for Redis storage"""
-		# Convert bytes queue to base64 for JSON serialization
-		queueB64 = base64.b64encode(tokenObj.queue).decode('utf-8') if tokenObj.queue else ""
-		
-		data = {
-			'userID': tokenObj.userID,
-			'username': tokenObj.username,
-			'safeUsername': tokenObj.safeUsername,
-			'privileges': tokenObj.privileges,
-			'admin': tokenObj.admin,
-			'irc': tokenObj.irc,
-			'kicked': tokenObj.kicked,
-			'restricted': tokenObj.restricted,
-			'loginTime': tokenObj.loginTime,
-			'pingTime': tokenObj.pingTime,
-			'timeOffset': tokenObj.timeOffset,
-			'streams': tokenObj.streams,
-			'tournament': tokenObj.tournament,
-			'messagesBuffer': tokenObj.messagesBuffer,
-			'spectators': tokenObj.spectators,
-			'spectating': tokenObj.spectating,
-			'spectatingUserID': tokenObj.spectatingUserID,
-			'location': tokenObj.location,
-			'joinedChannels': tokenObj.joinedChannels,
-			'ip': tokenObj.ip,
-			'country': tokenObj.country,
-			'awayMessage': tokenObj.awayMessage,
-			'sentAway': tokenObj.sentAway,
-			'matchID': tokenObj.matchID,
-			'tillerino': tokenObj.tillerino,
-			'silenceEndTime': tokenObj.silenceEndTime,
-			'queue': queueB64,
-			'spamRate': tokenObj.spamRate,
-			'actionID': tokenObj.actionID,
-			'actionText': tokenObj.actionText,
-			'actionMd5': tokenObj.actionMd5,
-			'actionMods': tokenObj.actionMods,
-			'gameMode': tokenObj.gameMode,
-			'beatmapID': tokenObj.beatmapID,
-			'rankedScore': tokenObj.rankedScore,
-			'accuracy': tokenObj.accuracy,
-			'playcount': tokenObj.playcount,
-			'totalScore': tokenObj.totalScore,
-			'gameRank': tokenObj.gameRank,
-			'pp': tokenObj.pp,
-			'token': tokenObj.token
-		}
-		return json.dumps(data)
+		try:
+			# Convert bytes queue to base64 for JSON serialization
+			queueB64 = base64.b64encode(tokenObj.queue).decode('utf-8') if tokenObj.queue else ""
+			
+			# Safely convert values with proper defaults
+			data = {
+				'userID': int(tokenObj.userID if tokenObj.userID is not None else 0),
+				'username': str(tokenObj.username if tokenObj.username is not None else ""),
+				'safeUsername': str(tokenObj.safeUsername if tokenObj.safeUsername is not None else ""),
+				'privileges': int(tokenObj.privileges if tokenObj.privileges is not None else 0),
+				'admin': bool(tokenObj.admin if tokenObj.admin is not None else False),
+				'irc': bool(tokenObj.irc if tokenObj.irc is not None else False),
+				'kicked': bool(tokenObj.kicked if tokenObj.kicked is not None else False),
+				'restricted': bool(tokenObj.restricted if tokenObj.restricted is not None else False),
+				'loginTime': int(tokenObj.loginTime if tokenObj.loginTime is not None else 0),
+				'pingTime': int(tokenObj.pingTime if tokenObj.pingTime is not None else 0),
+				'timeOffset': int(tokenObj.timeOffset if tokenObj.timeOffset is not None else 0),
+				'streams': list(tokenObj.streams) if tokenObj.streams else [],
+				'tournament': bool(tokenObj.tournament if tokenObj.tournament is not None else False),
+				'messagesBuffer': list(tokenObj.messagesBuffer) if tokenObj.messagesBuffer else [],
+				'spectators': list(tokenObj.spectators) if tokenObj.spectators else [],
+				'spectating': str(tokenObj.spectating) if tokenObj.spectating else None,
+				'spectatingUserID': int(tokenObj.spectatingUserID if tokenObj.spectatingUserID is not None else 0),
+				'location': list(tokenObj.location) if tokenObj.location else [0, 0],
+				'joinedChannels': list(tokenObj.joinedChannels) if tokenObj.joinedChannels else [],
+				'ip': str(tokenObj.ip if tokenObj.ip is not None else ""),
+				'country': int(tokenObj.country if tokenObj.country is not None else 0),
+				'awayMessage': str(tokenObj.awayMessage if tokenObj.awayMessage is not None else ""),
+				'sentAway': list(tokenObj.sentAway) if tokenObj.sentAway else [],
+				'matchID': int(tokenObj.matchID if tokenObj.matchID is not None else -1),
+				'tillerino': list(tokenObj.tillerino) if tokenObj.tillerino else [0, 0, -1.0],
+				'silenceEndTime': int(tokenObj.silenceEndTime if tokenObj.silenceEndTime is not None else 0),
+				'queue': queueB64,
+				'spamRate': int(tokenObj.spamRate if tokenObj.spamRate is not None else 0),
+				'actionID': int(tokenObj.actionID if tokenObj.actionID is not None else 0),
+				'actionText': str(tokenObj.actionText if tokenObj.actionText is not None else ""),
+				'actionMd5': str(tokenObj.actionMd5 if tokenObj.actionMd5 is not None else ""),
+				'actionMods': int(tokenObj.actionMods if tokenObj.actionMods is not None else 0),
+				'gameMode': int(tokenObj.gameMode if tokenObj.gameMode is not None else 0),
+				'beatmapID': int(tokenObj.beatmapID if tokenObj.beatmapID is not None else 0),
+				'rankedScore': int(tokenObj.rankedScore if tokenObj.rankedScore is not None else 0),
+				'accuracy': float(tokenObj.accuracy if tokenObj.accuracy is not None else 0.0),
+				'playcount': int(tokenObj.playcount if tokenObj.playcount is not None else 0),
+				'totalScore': int(tokenObj.totalScore if tokenObj.totalScore is not None else 0),
+				'gameRank': int(tokenObj.gameRank if tokenObj.gameRank is not None else 0),
+				'pp': int(tokenObj.pp if tokenObj.pp is not None else 0),
+				'token': str(tokenObj.token if tokenObj.token is not None else "")
+			}
+			return json.dumps(data, separators=(',', ':'))  # Compact JSON
+		except Exception as e:
+			log.error(f"Failed to serialize token {getattr(tokenObj, 'token', 'unknown')}: {e}")
+			log.error(f"Token object attributes: userID={getattr(tokenObj, 'userID', None)}, username={getattr(tokenObj, 'username', None)}")
+			raise
 	
 	def _deserializeToken(self, jsonData):
 		"""Deserialize JSON data back to token object"""
@@ -151,9 +157,11 @@ class tokenList:
 			userTokensKey = self._getUserTokensKey(tokenObj.userID)
 			usernameTokensKey = self._getUsernameTokensKey(tokenObj.username)
 			
-			# Serialize and save token with TTL (24 hours)
+			# Serialize and save token 
 			serializedToken = self._serializeToken(tokenObj)
-			glob.redis.setex(tokenKey, 86400, serializedToken)
+			
+			# Use set with ex parameter instead of setex for better compatibility
+			glob.redis.set(tokenKey, serializedToken, ex=86400)
 			
 			# Update indexes with TTL
 			glob.redis.sadd(userTokensKey, tokenObj.token)
@@ -164,7 +172,8 @@ class tokenList:
 			# Update cache
 			self._tokenCache[tokenObj.token] = tokenObj
 		except Exception as e:
-			log.error(f"Failed to save token to Redis: {e}")
+			log.error(f"Failed to save token to Redis for user {getattr(tokenObj, 'username', 'unknown')} (ID: {getattr(tokenObj, 'userID', 'unknown')}): {e}")
+			log.error(f"Token: {getattr(tokenObj, 'token', 'unknown')}")
 			# Fall back to cache only
 			self._tokenCache[tokenObj.token] = tokenObj
 	
@@ -476,7 +485,7 @@ class tokenList:
 			for tokenObj in tokens_to_update:
 				tokenKey = self._getTokenKey(tokenObj.token)
 				serializedToken = self._serializeToken(tokenObj)
-				pipe.setex(tokenKey, 86400, serializedToken)
+				pipe.set(tokenKey, serializedToken, ex=86400)
 			
 			pipe.execute()
 		except Exception as e:
@@ -509,7 +518,7 @@ class tokenList:
 			for tokenObj in tokens_to_update:
 				tokenKey = self._getTokenKey(tokenObj.token)
 				serializedToken = self._serializeToken(tokenObj)
-				pipe.setex(tokenKey, 86400, serializedToken)
+				pipe.set(tokenKey, serializedToken, ex=86400)
 			
 			pipe.execute()
 		except Exception as e:
@@ -595,7 +604,7 @@ class tokenList:
 					# Update token in Redis
 					tokenKey = self._getTokenKey(tokenObj.token)
 					serializedToken = self._serializeToken(tokenObj)
-					pipe.setex(tokenKey, 86400, serializedToken)
+					pipe.set(tokenKey, serializedToken, ex=86400)
 			
 			pipe.execute()
 		except Exception as e:
