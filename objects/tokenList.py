@@ -275,7 +275,9 @@ class tokenList:
 				pattern = "peppy:tokens:*"
 				keys = glob.redis.keys(pattern)
 				for key in keys:
-					token = key.split(":")[-1]  # Extract token from key
+					# Decode key if it's bytes
+					key_str = key.decode('utf-8') if isinstance(key, bytes) else key
+					token = key_str.split(":")[-1]  # Extract token from key
 					tokenObj = self.tokenList._getTokenFromRedis(token)
 					if tokenObj:
 						yield token, TokenWrapper(tokenObj, self.tokenList)
@@ -285,7 +287,9 @@ class tokenList:
 				pattern = "peppy:tokens:*"
 				keys = glob.redis.keys(pattern)
 				for key in keys:
-					token = key.split(":")[-1]  # Extract token from key
+					# Decode key if it's bytes
+					key_str = key.decode('utf-8') if isinstance(key, bytes) else key
+					token = key_str.split(":")[-1]  # Extract token from key
 					yield token
 			
 			def values(self):
@@ -293,7 +297,9 @@ class tokenList:
 				pattern = "peppy:tokens:*"
 				keys = glob.redis.keys(pattern)
 				for key in keys:
-					token = key.split(":")[-1]  # Extract token from key
+					# Decode key if it's bytes
+					key_str = key.decode('utf-8') if isinstance(key, bytes) else key
+					token = key_str.split(":")[-1]  # Extract token from key
 					tokenObj = self.tokenList._getTokenFromRedis(token)
 					if tokenObj:
 						yield TokenWrapper(tokenObj, self.tokenList)
@@ -371,7 +377,9 @@ class tokenList:
 		tokenStrings = glob.redis.smembers(userTokensKey)
 		
 		for tokenString in tokenStrings:
-			tokenObj = self._getTokenFromRedis(tokenString)
+			# Decode token string if it's bytes
+			token_str = tokenString.decode('utf-8') if isinstance(tokenString, bytes) else tokenString
+			tokenObj = self._getTokenFromRedis(token_str)
 			if tokenObj and tokenObj.userID == userID:
 				if ignoreIRC and tokenObj.irc:
 					continue
@@ -410,7 +418,9 @@ class tokenList:
 		tokenStrings = glob.redis.smembers(usernameTokensKey)
 		
 		for tokenString in tokenStrings:
-			tokenObj = self._getTokenFromRedis(tokenString)
+			# Decode token string if it's bytes
+			token_str = tokenString.decode('utf-8') if isinstance(tokenString, bytes) else tokenString
+			tokenObj = self._getTokenFromRedis(token_str)
 			if tokenObj:
 				if (not safe and tokenObj.username.lower() == who) or (safe and tokenObj.safeUsername == who):
 					if ignoreIRC and tokenObj.irc:
@@ -442,7 +452,9 @@ class tokenList:
 		tokenStrings = glob.redis.smembers(userTokensKey)
 		
 		for tokenString in tokenStrings:
-			tokenObj = self._getTokenFromRedis(tokenString)
+			# Decode token string if it's bytes
+			token_str = tokenString.decode('utf-8') if isinstance(tokenString, bytes) else tokenString
+			tokenObj = self._getTokenFromRedis(token_str)
 			if tokenObj and tokenObj.userID == userID:
 				delete.append(tokenObj)
 
@@ -468,7 +480,9 @@ class tokenList:
 			tokens_to_update = []
 			
 			for key in keys:
-				token = key.split(":")[-1]  # Extract token from key
+				# Decode key if it's bytes
+				key_str = key.decode('utf-8') if isinstance(key, bytes) else key
+				token = key_str.split(":")[-1]  # Extract token from key
 				tokenObj = self._getTokenFromRedis(token)
 				if tokenObj:
 					shouldEnqueue = False
@@ -508,7 +522,9 @@ class tokenList:
 			tokens_to_update = []
 			
 			for key in keys:
-				token = key.split(":")[-1]  # Extract token from key
+				# Decode key if it's bytes
+				key_str = key.decode('utf-8') if isinstance(key, bytes) else key
+				token = key_str.split(":")[-1]  # Extract token from key
 				tokenObj = self._getTokenFromRedis(token)
 				if tokenObj:
 					tokenObj.enqueue(packet)
@@ -543,7 +559,9 @@ class tokenList:
 			keys = glob.redis.keys(pattern)
 			
 			for key in keys:
-				token = key.split(":")[-1]  # Extract token from key
+				# Decode key if it's bytes
+				key_str = key.decode('utf-8') if isinstance(key, bytes) else key
+				token = key_str.split(":")[-1]  # Extract token from key
 				tokenObj = self._getTokenFromRedis(token)
 				if tokenObj:
 					# Check timeout (fokabot is ignored)
@@ -597,7 +615,9 @@ class tokenList:
 			pipe = glob.redis.pipeline()
 			
 			for key in keys:
-				token = key.split(":")[-1]  # Extract token from key
+				# Decode key if it's bytes
+				key_str = key.decode('utf-8') if isinstance(key, bytes) else key
+				token = key_str.split(":")[-1]  # Extract token from key
 				tokenObj = self._getTokenFromRedis(token)
 				if tokenObj:
 					tokenObj.spamRate = 0
@@ -701,7 +721,9 @@ class tokenList:
 			keys = glob.redis.keys(pattern)
 			tokens = []
 			for key in keys:
-				token = key.split(":")[-1]
+				# Decode key if it's bytes
+				key_str = key.decode('utf-8') if isinstance(key, bytes) else key
+				token = key_str.split(":")[-1]
 				tokenObj = self._getTokenFromRedis(token)
 				if tokenObj:
 					tokens.append(TokenWrapper(tokenObj, self))
